@@ -16,6 +16,7 @@
 
 package nextflow.prov
 
+import java.net.URI;
 import java.nio.file.Path
 
 import groovy.json.JsonOutput
@@ -24,10 +25,13 @@ import nextflow.Session
 import nextflow.file.FileHolder
 import nextflow.processor.TaskRun
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import com.quiltdata.quiltcore.Entry
 import com.quiltdata.quiltcore.Registry
 import com.quiltdata.quiltcore.Namespace
 import com.quiltdata.quiltcore.Manifest
+import com.quiltdata.quiltcore.key.PhysicalKey
 import com.quiltdata.quiltcore.key.LocalPhysicalKey
 import com.quiltdata.quiltcore.key.S3PhysicalKey
 
@@ -116,6 +120,17 @@ class QuiltRenderer implements Renderer {
                     accum.put(values, task['id'])
             }
             accum
+        }
+
+        for(Path source: outputs.keySet()){
+            println "Source" + source.toUriString()
+            println "Target" + outputs.get(source).toUriString()
+            def Entry e = new Entry(
+                PhysicalKey.fromUri(new URI(outputs.get(source).toUriString())),
+                0l,
+                new Entry.Hash(Entry.HashType.SHA256, ""),
+                (ObjectNode) null
+            )
         }
 
         // render JSON output
