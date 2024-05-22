@@ -59,6 +59,12 @@ dependencies {
     compileOnly 'io.nextflow:nextflow:23.04.0'
     compileOnly 'org.slf4j:slf4j-api:1.7.10'
     compileOnly 'org.pf4j:pf4j:3.4.1'
+
+    // quiltcore
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.17.1'
+    implementation 'com.upplication:s3fs:2.2.2'
+    implementation 'com.quiltdata:quiltcore:0.1.2'
+    
     // add here plugins depepencies
 
     // test configuration
@@ -82,4 +88,3 @@ dependencies {
 test {
     useJUnitPlatform()
 }
-
