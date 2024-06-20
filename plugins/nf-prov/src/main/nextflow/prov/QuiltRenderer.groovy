@@ -16,7 +16,10 @@
 
 package nextflow.prov
 
+import java.io.FileOutputStream
+import java.io.OutputStream
 import java.net.URI;
+import java.nio.file.Files
 import java.nio.file.Path
 
 import groovy.json.JsonOutput
@@ -122,29 +125,51 @@ class QuiltRenderer implements Renderer {
             accum
         }
 
-        for(Path source: outputs.keySet()){
-            println "Source" + source.toUriString()
-            println "Target" + outputs.get(source).toUriString()
-            def Entry e = new Entry(
-                PhysicalKey.fromUri(new URI(outputs.get(source).toUriString())),
-                0l,
-                new Entry.Hash(Entry.HashType.SHA256, ""),
-                (ObjectNode) null
-            )
-        }
+        
 
         // render JSON output
-        def manifest = [
-            'pipeline': session.config.manifest,
-            'published': outputs.collect { source, target -> [
-                'source': source.toUriString(),
-                'target': target.toUriString(),
-                'publishingTaskId': taskLookup[source.toUriString()],
-            ] },
-            'tasks': tasksMap
-        ]
+        //def manifest = [
+        //    'pipeline': session.config.manifest,
+        //    'published': outputs.collect { source, target -> [
+        //        'source': source.toUriString(),
+        //        'target': target.toUriString(),
+        //        'publishingTaskId': taskLookup[source.toUriString()],
+        //    ] },
+        //    'tasks': tasksMap
+        //]
 
-        path.text = JsonOutput.prettyPrint(JsonOutput.toJson(manifest))
+        println "Building manifest"
+        def builder = new Manifest.Builder()
+        int i=0
+        for(Path source: outputs.keySet()){
+            println "Source URI " + source.toUriString()
+            println "Target URI " + outputs.get(source).toUriString()
+            def target = outputs.get(source)
+            if(target == null){
+                println "NULL TARGET"
+                break
+            }
+            
+            def logicalKey = target.getFileName()
+
+            // Get the file size
+            def fileSize = Files.size(target)
+            def Entry e = new Entry(
+                PhysicalKey.fromUri(target.toUri()),
+                Files.size(target),
+                null,
+                null
+            )
+            builder.addEntry(logicalKey.toString(), e.withHash())
+            println("Added ${logicalKey}")
+        }
+        def pkg = builder.build()
+        OutputStream outputStream = new FileOutputStream(path.toString())
+        pkg.serializeToOutputStream(outputStream)
+        outputStream.close()
+        println "Writing manifest to " + path.toString()
+
+        //path.text = JsonOutput.prettyPrint(JsonOutput.toJson(manifest))
     }
 
 }
